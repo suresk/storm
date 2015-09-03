@@ -109,16 +109,6 @@ public class KafkaUtilsTest {
     }
 
     @Test
-    public void getOffsetFromConfigAndDontForceFromStart() {
-        config.forceFromStart = false;
-        config.startOffsetTime = OffsetRequest.EarliestTime();
-        createTopicAndSendMessage();
-        long latestOffset = KafkaUtils.getOffset(simpleConsumer, config.topic, 0, OffsetRequest.LatestTime());
-        long offsetFromConfig = KafkaUtils.getOffset(simpleConsumer, config.topic, 0, config);
-        assertThat(latestOffset, is(equalTo(offsetFromConfig)));
-    }
-
-    @Test
     public void getOffsetFromConfigAndFroceFromStart() {
         config.forceFromStart = true;
         config.startOffsetTime = OffsetRequest.EarliestTime();
