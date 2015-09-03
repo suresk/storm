@@ -81,6 +81,7 @@ public class PartitionManager {
         }
 
         Long currentOffset = KafkaUtils.getOffset(_consumer, spoutConfig.topic, id.partition, spoutConfig);
+        boolean forceZkWrite = true;
 
         if (jsonTopologyId == null || jsonOffset == null) { // failed to parse JSON?
             _committedTo = currentOffset;
@@ -90,6 +91,7 @@ public class PartitionManager {
             LOG.info("Topology change detected and reset from start forced, using configuration to determine offset");
         } else {
             _committedTo = jsonOffset;
+            forceZkWrite = false;
             LOG.info("Read last commit offset from zookeeper: " + _committedTo + "; old topology_id: " + jsonTopologyId + " - new topology_id: " + topologyInstanceId );
         }
 
@@ -102,6 +104,7 @@ public class PartitionManager {
 
         LOG.info("Starting Kafka " + _consumer.host() + ":" + id.partition + " from offset " + _committedTo);
         _emittedToOffset = _committedTo;
+        commit(forceZkWrite);
 
         _fetchAPILatencyMax = new CombinedMetric(new MaxMetric());
         _fetchAPILatencyMean = new ReducedMetric(new MeanReducer());
@@ -221,8 +224,12 @@ public class PartitionManager {
     }
 
     public void commit() {
+      commit(false);
+    }
+
+    public void commit(boolean force) {
         long lastCompletedOffset = lastCompletedOffset();
-        if (_committedTo != lastCompletedOffset) {
+        if (_committedTo != lastCompletedOffset || force) {
             LOG.debug("Writing last completed offset (" + lastCompletedOffset + ") to ZK for " + _partition + " for topology: " + _topologyInstanceId);
             Map<Object, Object> data = (Map<Object, Object>) ImmutableMap.builder()
                     .put("topology", ImmutableMap.of("id", _topologyInstanceId,
