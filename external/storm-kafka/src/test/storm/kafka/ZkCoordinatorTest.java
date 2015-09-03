@@ -52,6 +52,7 @@ public class ZkCoordinatorTest {
 
     @Before
     public void setUp() throws Exception {
+        stormConf.put(Config.TOPOLOGY_NAME, "test");
         MockitoAnnotations.initMocks(this);
         server = new TestingServer();
         String connectionString = server.getConnectString();
